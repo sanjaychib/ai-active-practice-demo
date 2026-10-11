@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Training to Practice</title>
+<style>
+:root{
+  --ink:#172033;
+  --muted:#667085;
+  --bg:#f5f7fb;
+  --panel:#ffffff;
+  --line:#dbe2ec;
+  --accent:#2859d9;
+  --accent-soft:#edf2ff;
+  --good:#176b55;
+  --good-soft:#e9f6f1;
+  --warn:#8a6100;
+  --warn-soft:#fff6dc;
+  --bad:#a34336;
+  --bad-soft:#fff0ed;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.45;
+}
+button{font:inherit}
+button:focus-visible{outline:3px solid #111;outline-offset:3px}
+.wrap{width:min(1080px,calc(100% - 24px));margin:0 auto;padding:16px 0 42px}
+.top{position:sticky;top:0;z-index:20;background:rgba(245,247,251,.96);backdrop-filter:blur(8px);padding:10px 0}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.kicker{font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.step{font-size:.84rem;color:var(--muted)}
+.track{height:8px;background:#dfe5ee;border-radius:999px;overflow:hidden}
+.bar{height:100%;width:16.666%;background:var(--accent);transition:width .2s ease}
+.screen{display:none;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:0 12px 28px rgba(24,32,51,.06)}
+.screen.active{display:block}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+h1{font-size:clamp(2.1rem,5vw,4rem);line-height:1.04;letter-spacing:-.03em;margin:16px 0 14px;max-width:820px}
+h2{font-size:clamp(1.55rem,3vw,2.3rem);line-height:1.1;margin:0 0 10px}
+h3{margin:0 0 8px;font-size:1.05rem}
+p{margin:0 0 14px}
+.lead{font-size:1.08rem;color:var(--muted);max-width:780px}
+.note{margin-top:18px;padding:15px;border:1px solid var(--line);border-radius:15px;background:#fafbfd}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px}
+.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.source-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;min-height:150px}
+.source-card .eyebrow{font-size:.74rem;text-transform:uppercase;font-weight:800;color:var(--muted);letter-spacing:.05em}
+.source-card strong{display:block;margin:6px 0 8px}
+.source-card p{color:var(--muted);font-size:.95rem}
+.summary-line{display:flex;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border-radius:11px;background:#f8fafc;font-size:.9rem;font-weight:700}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.panel{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.smalltag{font-size:.74rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.ai-claim{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;background:#fff}
+.ai-claim strong{display:block;margin-bottom:6px}
+.review-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:18px}
+.review-card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}
+.review-card .claim{font-weight:800;font-size:1.03rem;margin-bottom:12px}
+.review-card .evidence{padding:12px;border-radius:12px;background:#f8fafc;color:var(--muted);margin-bottom:12px}
+.judge-row{display:flex;gap:10px;flex-wrap:wrap}
+.judge{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:800;cursor:pointer}
+.judge.selected{border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent)}
+.review-result{display:none;margin-top:12px;padding:12px;border-radius:12px;font-weight:700}
+.review-result.show{display:block}
+.good{background:var(--good-soft);color:var(--good)}
+.warn{background:var(--warn-soft);color:var(--warn)}
+.bad{background:var(--bad-soft);color:var(--bad)}
+.decision-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.decision{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff;text-align:left;cursor:pointer}
+.decision strong{display:block;margin-bottom:5px}
+.decision.selected{border:2px solid var(--accent);background:var(--accent-soft)}
+.feedback{display:none;margin-top:16px;padding:15px;border-radius:14px;font-weight:700}
+.feedback.show{display:block}
+.corrected{margin-top:18px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.corrected .label{padding:11px 15px;background:#f8fafc;border-bottom:1px solid var(--line);font-weight:800}
+.corrected .body{padding:17px}
+.mark{background:#fff3b8;padding:1px 4px;border-radius:4px}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}
+.flowstep{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff;font-weight:800}
+.takeaway{margin-top:18px;padding:16px;border:1px solid #cad7ff;border-radius:15px;background:linear-gradient(135deg,var(--accent-soft),#fff)}
+@media(max-width:820px){
+  .grid3,.split,.decision-grid,.flow{grid-template-columns:1fr}
+  .screen{padding:22px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="toprow">
+      <div class="kicker">Active practice simulation</div>
+      <div class="step" id="stepText">1 of 6</div>
+    </div>
+    <div class="track" id="progress" role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1">
+      <div class="bar" id="bar"></div>
+    </div>
+  </div>
+
+  <section class="screen active" data-screen="0">
+    <span class="badge">From training to practice</span>
+    <h1>Would you use this AI briefing?</h1>
+    <p class="lead">A short simulation where the learner checks evidence, judges AI output and decides what to do next.</p>
+    <div class="note"><strong>Your role:</strong> You are a manager preparing a short update for a senior meeting.</div>
+    <div class="nav"><span></span><button class="btn primary next" type="button">Start</button></div>
+  </section>
+
+  <section class="screen" data-screen="1">
+    <span class="badge">1 · Understand the case</span>
+    <h2>Three things you know</h2>
+    <p class="lead">The sources are shown as short business signals, so the learner gets the picture quickly.</p>
+
+    <div class="grid3">
+      <div class="source-card">
+        <div class="eyebrow">Sales</div>
+        <strong>September improved</strong>
+        <p>Sales were 8% above August. Two large orders contributed significantly.</p>
+        <div class="summary-line"><span class="dot"></span>October outlook is positive, but not formally forecast.</div>
+      </div>
+
+      <div class="source-card">
+        <div class="eyebrow">Customers</div>
+        <strong>Service concerns appeared</strong>
+        <p>Three major customers reported slower response times.</p>
+        <div class="summary-line"><span class="dot"></span>One customer has requested a service review.</div>
+      </div>
+
+      <div class="source-card">
+        <div class="eyebrow">Performance</div>
+        <strong>Service metrics worsened</strong>
+        <p>Response time rose from 4.2 to 6.1 hours.</p>
+        <div class="summary-line"><span class="dot"></span>Customer satisfaction fell from 8.6 to 8.1.</div>
+      </div>
+    </div>
+
+    <div class="nav"><button class="btn secondary prev" type="button">Back</button><button class="btn primary next" type="button">See AI briefing</button></div>
+  </section>
+
+  <section class="screen" data-screen="2">
+    <span class="badge">2 · Compare</span>
+    <h2>AI briefing vs. source evidence</h2>
+    <p class="lead">The source signals stay visible while the AI claims are introduced.</p>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head"><h3>Source picture</h3><span class="smalltag">What is known</span></div>
+        <div class="ai-claim"><strong>Sales</strong>Up 8%, helped by two large orders.</div>
+        <div class="ai-claim"><strong>Outlook</strong>Positive expectation, but no approved forecast.</div>
+        <div class="ai-claim"><strong>Service</strong>Response times and satisfaction both worsened.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>AI briefing</h3><span class="smalltag">What AI says</span></div>
+        <div class="ai-claim"><strong>Claim 1</strong>September sales increased by 8%.</div>
+        <div class="ai-claim"><strong>Claim 2</strong>Customer demand is strengthening and October sales will continue growing.</div>
+        <div class="ai-claim"><strong>Claim 3</strong>Customer service performance remains stable with no major issues.</div>
+      </div>
+    </div>
+
+    <div class="nav"><button class="btn secondary prev" type="button">Back</button><button class="btn primary next" type="button">Review each claim</button></div>
+  </section>
+
+  <section class="screen" data-screen="3">
+    <span class="badge">3 · Judge each claim</span>
+    <h2>Supported, uncertain or not supported?</h2>
+    <p class="lead">One decision at a time. This reduces the abrupt jump into a quiz.</p>
+
+    <div class="review-grid">
+      <div class="review-card" data-answer="supported">
+        <div class="claim">Claim 1: September sales increased by 8%.</div>
+        <div class="evidence">Source evidence: September sales were 8% above August.</div>
+        <div class="judge-row">
+          <button class="judge" type="button" data-value="supported">Supported</button>
+          <button class="judge" type="button" data-value="uncertain">Uncertain</button>
+          <button class="judge" type="button" data-value="unsupported">Not supported</button>
+        </div>
+        <div class="review-result" aria-live="polite"></div>
+      </div>
+
+      <div class="review-card" data-answer="uncertain">
+        <div class="claim">Claim 2: October sales will continue growing.</div>
+        <div class="evidence">Source evidence: the sales team expects October to remain positive, but no forecast has been approved.</div>
+        <div class="judge-row">
+          <button class="judge" type="button" data-value="supported">Supported</button>
+          <button class="judge" type="button" data-value="uncertain">Uncertain</button>
+          <button class="judge" type="button" data-value="unsupported">Not supported</button>
+        </div>
+        <div class="review-result" aria-live="polite"></div>
+      </div>
+
+      <div class="review-card" data-answer="unsupported">
+        <div class="claim">Claim 3: Customer service performance remains stable.</div>
+        <div class="evidence">Source evidence: response time worsened and customer satisfaction declined.</div>
+        <div class="judge-row">
+          <button class="judge" type="button" data-value="supported">Supported</button>
+          <button class="judge" type="button" data-value="uncertain">Uncertain</button>
+          <button class="judge" type="button" data-value="unsupported">Not supported</button>
+        </div>
+        <div class="review-result" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="nav"><button class="btn secondary prev" type="button">Back</button><button class="btn primary next" type="button">Make the business decision</button></div>
+  </section>
+
+  <section class="screen" data-screen="4">
+    <span class="badge">4 · Decide</span>
+    <h2>What should you do with the briefing?</h2>
+    <p class="lead">Now the learner has reviewed the evidence. The decision feels like the next natural step.</p>
+
+    <div class="decision-grid" id="decisionChoices">
+      <button class="decision" type="button" data-value="use"><strong>Use as written</strong>The core sales number is correct.</button>
+      <button class="decision" type="button" data-value="correct"><strong>Correct and use</strong>Fix the unsupported outlook, restore the service issue, then use the briefing.</button>
+      <button class="decision" type="button" data-value="more"><strong>Ask for more information</strong>Do not use anything until new data arrives.</button>
+      <button class="decision" type="button" data-value="escalate"><strong>Escalate</strong>Send the case to a senior manager instead.</button>
+    </div>
+
+    <button class="btn primary" id="checkDecision" type="button" style="margin-top:16px">Submit decision</button>
+    <div class="feedback" id="decisionFeedback" aria-live="polite"></div>
+
+    <div class="nav"><button class="btn secondary prev" type="button">Back</button><button class="btn primary next" type="button">See improved briefing</button></div>
+  </section>
+
+  <section class="screen" data-screen="5">
+    <span class="badge">5 · Feedback</span>
+    <h2>A stronger briefing</h2>
+
+    <div class="corrected">
+      <div class="label">Revised executive briefing</div>
+      <div class="body">
+        <p><strong>Sales:</strong> September sales were 8% above August, helped by two large orders.</p>
+        <p><strong>Outlook:</strong> The sales team expects October to remain positive, but <span class="mark">continued growth is not yet confirmed by an approved forecast</span>.</p>
+        <p><strong>Service:</strong> Response time worsened from 4.2 to 6.1 hours and customer satisfaction fell from 8.6 to 8.1. <span class="mark">One major customer has requested a service review</span>.</p>
+        <p><strong>Meeting focus:</strong> Maintain commercial momentum while addressing the emerging service issue.</p>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flowstep">SOURCE</div>
+      <div class="flowstep">AI CLAIM</div>
+      <div class="flowstep">CHECK</div>
+      <div class="flowstep">JUDGE</div>
+      <div class="flowstep">DECIDE</div>
+    </div>
+
+    <div class="takeaway"><strong>Design principle:</strong> the learner practises the behaviour in the same order they would use it at work.</div>
+
+    <div class="nav"><button class="btn secondary prev" type="button">Back</button><button class="btn primary" type="button" id="restart">Restart</button></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const screens=[...document.querySelectorAll('.screen')];
+  const bar=document.getElementById('bar');
+  const stepText=document.getElementById('stepText');
+  const progress=document.getElementById('progress');
+  let current=0;
+
+  function show(n){
+    current=Math.max(0,Math.min(n,screens.length-1));
+    screens.forEach((s,i)=>s.classList.toggle('active',i===current));
+    bar.style.width=((current+1)/screens.length*100)+'%';
+    stepText.textContent=(current+1)+' of '+screens.length;
+    progress.setAttribute('aria-valuenow',String(current+1));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  document.querySelectorAll('.next').forEach(b=>b.addEventListener('click',()=>show(current+1)));
+  document.querySelectorAll('.prev').forEach(b=>b.addEventListener('click',()=>show(current-1)));
+  document.getElementById('restart').addEventListener('click',()=>show(0));
+
+  document.querySelectorAll('.review-card').forEach(card=>{
+    const result=card.querySelector('.review-result');
+    const answer=card.dataset.answer;
+    const buttons=[...card.querySelectorAll('.judge')];
+
+    buttons.forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        buttons.forEach(x=>x.classList.remove('selected'));
+        btn.classList.add('selected');
+        const correct=btn.dataset.value===answer;
+        result.className='review-result show '+(correct?'good':'warn');
+
+        const messages={
+          supported:'Supported. The 8% increase is stated directly in the source.',
+          uncertain:'Uncertain. The source is positive, but no approved forecast confirms continued growth.',
+          unsupported:'Not supported. The service data shows deterioration, not stability.'
+        };
+
+        if(correct){
+          result.textContent=messages[answer];
+        }else{
+          result.textContent='Check the source evidence again before deciding.';
+        }
+      });
+    });
+  });
+
+  let decision=null;
+  const decisions=[...document.querySelectorAll('#decisionChoices .decision')];
+  decisions.forEach(item=>{
+    item.addEventListener('click',()=>{
+      decision=item.dataset.value;
+      decisions.forEach(x=>x.classList.remove('selected'));
+      item.classList.add('selected');
+    });
+  });
+
+  document.getElementById('checkDecision').addEventListener('click',()=>{
+    const fb=document.getElementById('decisionFeedback');
+    if(decision==='correct'){
+      fb.className='feedback show good';
+      fb.textContent='Best response. Keep the useful AI output, correct the overstatement and restore the missing service context.';
+    }else if(decision){
+      fb.className='feedback show warn';
+      fb.textContent='A stronger response is to correct the briefing and then use it, rather than either trusting it blindly or discarding it completely.';
+    }else{
+      fb.className='feedback show warn';
+      fb.textContent='Choose a response first.';
+    }
+  });
+
+  show(0);
+})();
+</script>
+</body>
+</html>
